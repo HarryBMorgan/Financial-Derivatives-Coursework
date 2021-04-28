@@ -25,31 +25,56 @@ import statsmodels.api as sm
 # generated. Switch to True when you want to save the figures generated.
 Save_in = str(input("Save the figures? (y/n)? [Default = n]"))
 if Save_in.lower() == "y":
+    print("Program will save plots\n")
     Save = True
 else:
+    print("Default: Program will not save plots\n")
     Save = False
 
 
             # ---   SET VARIABLES   --- #
 # Set names of company and it's code.
-Name = str(input("Enter name of company [Default = Royal Mail]:"))
+Name = str(input("Enter name of company [Default = Royal Mail]:")).capitalize()
 if Name == "":
+    print("Default: Royal Mail")
     Name = "Royal Mail" # EDIT THIS #
     Code = "RMG.L" # EDIT THIS #
-elif Name != "": Code = str(input("Enter stock code [Default = RMG.L]:"))
-if Code == "": Code = "RMG.L"
+elif Name != "":
+    print("Company set: %s" %(Name))
+    Code = str(input("Enter stock code [Default = RMG.L]:")).upper()
+
+if Code == "":
+    print("Default [RMG.L]\n")
+    Code = "RMG.L"
+elif Code != "":
+    print("Company code set: %s\n" %(Code))
 
 # Set date range. This gives financial year covering the range specified.
-try: Start_year = int(input("Enter year for data to start [Default = 2016]:"))
-except ValueError: Start_year = 2016
-try: End_year = int(input("Enter year for data to end [Default = 2021]:"))
-except ValueError: End_year = 2021
+try:
+    Start_year = int(input("Enter year for data to start [Default = 2016]:"))
+    print("Start year set: %s" %(Start_year))
+except ValueError:
+    print("Default: 2016")
+    Start_year = 2016
+
+try:
+    End_year = int(input("Enter year for data to end [Default = 2021]:"))
+    print("End year set: %s\n" %(End_year))
+except ValueError:
+    print("Default: 2021\n")
+    End_year = 2021
+
 Fiscal_year = "%s-%s" %(Start_year, End_year - 2000)
 
 # Set which quarter to use. Leave empty if want whole year.
-Quarter = str(input("Enter quarter to get data for [Default = Whole Year]:"))
-Quarter_dict = {"First Quarter": [3/4, 0], "Second Quarter": [2/4, 1/4], \
-    "Third Quarter": [1/4, 2/4], "Fourth Quarter": [0, 3/4], "": [0, 0]}
+Quarter = str(input("Enter quarter [Default = Whole Year]:")).lower().strip()
+if Quarter != "":
+    print("%s selected\n" %(Quarter))
+else:
+    print("Whole year selected\n")
+
+Quarter_dict = {"firstquarter": [3/4, 0], "secondquarter": [2/4, 1/4], \
+    "thirdquarter": [1/4, 2/4], "fourthquarter": [0, 3/4], "": [0, 0]}
 val = Quarter_dict[Quarter]
 
 # Set the dates of when to get the data from.
@@ -76,7 +101,7 @@ plt.grid()
 if Save == True:
     plt.savefig("Figures/%s/%s Historical Prices for %s Fiscal Year %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
-    print("Historical price plot saved.")
+    print("Historical price plot saved.\n")
 elif Save == False:
     pass
 plt.show()
@@ -95,7 +120,7 @@ Mean = np.mean(Returns)
 Volatility = SD / np.sqrt(T)
 Drift = Mean / T - Volatility**2 / 2
 print("Volatility =", Volatility)
-print("Drift =", Drift)
+print("Drift =", Drift, "\n")
 
 # Use the volatility and drift to create a normal distribution and plot over
 # histogram to check how well it fits.
@@ -110,7 +135,7 @@ plt.grid()
 if Save == True:
     plt.savefig("Figures/%s/%s Returns for %s Fiscal Year %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
-    print("Histogram saved.")
+    print("Histogram saved.\n")
 elif Save == False:
     pass
 plt.show()
@@ -143,10 +168,14 @@ plt.grid()
 if Save == True:
     plt.savefig("Figures/%s/QQ Plot of %s Returns for %s Fiscal Year %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
-    print("QQ-plot saved.")
+    print("QQ-plot saved.\n")
 elif Save == False:
     pass
 plt.show()
+
+
+            # ---   SOMETHING NEW   --- #
+# This is where I will add new code in the future.
 
 
             # ---   EXIT MESSAGE   --- #
