@@ -46,7 +46,7 @@ elif Name != "":
 
 if Code == "":
     print("Company code set: RMG.L\n")
-    Code = "RMG.L"
+    Code = "RMG.L" # EDIT THIS #
 elif Code != "":
     print("Company code set: %s\n" %Code)
 
@@ -56,14 +56,14 @@ try:
     print("Start year set: %s" %Start_year)
 except ValueError:
     print("Start year set: 2016")
-    Start_year = 2016
+    Start_year = 2016 # EDIT THIS #
 
 try:
     End_year = int(input("Enter year for data to end [Default = 2021]:"))
     print("End year set: %s\n" %End_year)
 except ValueError:
     print("End year set: 2021\n")
-    End_year = 2021
+    End_year = 2021 # EDIT THIS #
 
 Fiscal_year = "%s-%s" %(Start_year, End_year - 2000)
 
@@ -174,6 +174,90 @@ elif Save == False:
 plt.show()
 
 
+            # ---   INVESTMENT SCENARIO   --- #
+print("    # ---   INVESTMENT SCENARIO   --- #\n")
+# Here the code to print information about an initial £1M investment on the
+# Start_date will be considered. Information calculated will include the value
+# of the investment today, the return (%) over the period considered, the
+# maximum and minimum values of the investment ofer the period. Comparison data
+# will also be calculated which will be explained in due course.
+
+# Create initial investment on Start_date.
+Value = 1 #Million british pounds.
+print("Considering a £%s M investment over the time range considered:\n" %Value)
+print("Value of investment on %s = £%s M" %(Start_date, '%.2f' %Value))
+
+# Calculate change over time range considered.
+Change = Data[-1] / Data[0]
+Value_final = Value * Change
+print("Value of investment on %s = £%s M\n" %(End_date, '%.2f' %Value_final))
+
+# Calculate the max the investment would have been.
+Value_max = Value * (max(Data) / Data[0])
+Date_max = Data[Data == max(Data)].index.tolist()[0]
+print("The maximum value of the investment was £%s M on the %s" \
+    %('%.2f' %Value_max, str(Date_max)[:10]))
+
+# Calculate the min the investment would have been.
+Value_min = Value * (min(Data) / Data[0])
+Date_min = Data[Data == min(Data)].index.tolist()[0]
+print("The minimum the value the investment was £%s M on the %s\n" \
+    %('%.2f' %Value_min, str(Date_min)[:10]))
+
+# Here there will be a calculation of how well a principal of £1M will have
+# done over the same period considered above, in a savings account. The
+# model used will assume continously compounded interest, with an interest rate
+# equal to that of the average 12 LIBOR for the time considered.
+
+# This dict holds the 12 month average LIBOR for each month from 2016 to 2020.
+# It will be called # upon based on the start date of the imagined investment
+# above. This data is obtained from the following website.
+# https://www.macrotrends.net/1433/historical-libor-rates-chart
+LIBOR = {"2016-01": 0.0114, "2016-02": 0.0118, "2016-03": 0.0121, \
+    "2016-04": 0.0123, "2016-05": 0.0134, "2016-06": 0.0123, "2016-07": 0.0143, \
+    "2016-08": 0.0156, "2016-09": 0.0155, "2016-10": 0.0158, "2016-11": 0.0164, \
+    "2016-12": 0.0169, \
+    
+    "2017-01": 0.0171, "2017-02": 0.0176, "2017-03": 0.0180, "2017-04": 0.0177, \
+    "2017-05": 0.0172, "2017-06": 0.0174, "2017-07": 0.0173, "2017-08": 0.0171, \
+    "2017-09": 0.0178, "2017-10": 0.0185, "2017-11": 0.0195, "2017-12": 0.0211, \
+    
+    "2018-01": 0.0227, "2018-02": 0.0250, "2018-03": 0.0266, "2018-04": 0.0277, \
+    "2018-05": 0.0272, "2018-06": 0.0276, "2018-07": 0.0283, "2018-08": 0.0284, \
+    "2018-09": 0.0292, "2018-10": 0.0308, "2018-11": 0.0312, "2018-12": 0.0301, \
+    
+    "2019-01": 0.0298, "2019-02": 0.0287, "2019-03": 0.0271, "2019-04": 0.0272, \
+    "2019-05": 0.0251, "2019-06": 0.0218, "2019-07": 0.0219, "2019-08": 0.0197, \
+    "2019-09": 0.0203, "2019-10": 0.0196, "2019-11": 0.0195, "2019-12": 0.0200, \
+    
+    "2020-01": 0.0181, "2020-02": 0.0138, "2020-03": 0.0100, "2020-04": 0.0087, \
+    "2020-05": 0.0067, "2020-06": 0.0055, "2020-07": 0.0045, "2020-08": 0.0045, \
+    "2020-09": 0.0043}
+
+def cci(P):
+# This function calculates the compound interest on a principal after the time
+# considered of the whole data set. The inputs are the principle investment
+# and R, the rate, taken from the LIBOR dict.
+    
+    # Calculate the time in years of the data set considered.
+    T = (End_date - Start_date).days / 365
+    
+    # Find the correct LIBOR for the calculation. The LIBOR at the start of the
+    # data is taken and assumed to be the same over the entire time.
+    R = LIBOR[str(Start_date)[:7]]
+    
+    # Calculate the value of an investment after the time considered.
+    F = P * np.exp(R * T)
+    
+    # Return value to user.
+    return F
+
+# Calculate the final price of an investment of £1M over the time considered.
+F = cci(Data[0])
+print("Investing the £%s M from %s to %s would have yielded £%s M\n" \
+    %('%.2f' %Value, Start_date, End_date, '%.2f' %F))
+
+
             # ---   PREDICTING FUTURE PRICE   --- #
 print("    # ---   PREDICTING FUTURE PRICE   --- #\n")
 
@@ -202,13 +286,10 @@ except ValueError:
     dt = 1/4
     print("Time period set: %s yrs\n" %dt)
 
-# Set the timescale to use in calculations. This is 1 day of a fiscal year.
-T = 1 / 252
-
 # Calculate the drift and volatility of the daily returns based on a normal
 # distribution.
-Volatility = SD / np.sqrt(T)
-Drift = Mean / T - Volatility**2 / 2
+Volatility = SD / np.sqrt(1 / 252)
+Drift = Mean / (1 / 252) - Volatility**2 / 2
 print("Volatility =", Volatility)
 print("Drift =", Drift, "\n")
 
@@ -221,37 +302,6 @@ dS_upper, dS_lower = dS(Volatility, Drift, S, dt = dt)
 print("The predicted share price on %s (%s yrs later) with %s confidence is:" \
     %(End_date + timedelta(dt * 365), dt, "95%"))
 print("%s p < S < %s p\n" %('%.2f' %dS_lower,'%.2f' %dS_upper))
-
-
-            # ---   INVESTMENT SCENARIO   --- #
-print("    # ---   INVESTMENT SCENARIO   --- #\n")
-# Here the code to print information about an initial £1M investment on the
-# Start_date will be considered. Information calculated will include the value
-# of the investment today, the return (%) over the period considered, the
-# maximum and minimum values of the investment ofer the period. Comparison data
-# will also be calculated which will be explained in due course.
-
-# Create initial investment on Start_date.
-Value = 1 #Million british pounds.
-print("Considering a £%s M investment over the time range considered:\n" %Value)
-print("Value of investment on %s = £%s M" %(Start_date, '%.2f' %Value))
-
-# Calculate change over time range considered.
-Change = Data[-1] / Data[0]
-Value_final = Value * Change
-print("Value of investment on %s = £%s M\n" %(End_date, '%.2f' %Value_final))
-
-# Calculate the max the investment would have been.
-Value_max = Value * (max(Data) / Data[0])
-Date_max = Data[ Data == max( Data ) ].index.tolist()[0]
-print("The maximum value of the investment was £%s M on the %s" \
-    %('%.2f' %Value_max, str(Date_max)[:10]))
-
-# Calculate the min the investment would have been.
-Value_min = Value * (min(Data) / Data[0])
-Date_min = Data[ Data == min( Data ) ].index.tolist()[0]
-print("The minimum the value the investment was £%s M on the %s\n" \
-    %('%.2f' %Value_min, str(Date_min)[:10]))
 
 
             # ---   EXIT MESSAGE   --- #
