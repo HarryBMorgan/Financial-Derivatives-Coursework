@@ -93,21 +93,30 @@ Start_date = date(Start_year, 4, 5) + timedelta(val[1] * 356)
 Data = pdr.get_data_yahoo(Code, start = Start_date, end = End_date)["Adj Close"]
 
 
+# -----------------------------------------------------------------------------
+            # --- PART 1   --- #
+# -----------------------------------------------------------------------------
+
+
             # ---   PLOT HISTORICAL DATA   --- #
 Data.plot()
+
 plt.xlabel("Date", fontsize = 12)
-plt.xlim(Start_date, End_date)
 plt.ylabel("Adj. Close, pence", fontsize = 12)
-plt.title("%s Historical Prices for %s Fiscal Year %s" \
+plt.title("%s Historical Prices for %s Fiscal Year(s) %s" \
     %(Name, Fiscal_year, Quarter), fontsize = 12)
+
+plt.xlim(Start_date, End_date)
 plt.tight_layout()
 plt.grid()
+
 if Save == True:
-    plt.savefig("Figures/%s/%s Historical Prices for %s Fiscal Year %s" \
+    plt.savefig("Figures/%s/%s Historical Prices for %s Fiscal Year(s) %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
     print("Historical price plot saved.\n")
 elif Save == False:
     pass
+
 plt.show()
 
 
@@ -126,18 +135,24 @@ Mean = np.mean(Returns)
 # histogram to check how well it fits.
 Domain = np.linspace(-0.2, 0.2, len(Returns))
 plt.plot(Domain, stats.norm.pdf(Domain, Mean, SD))
+
 Returns.plot.hist(bins = 60, density = True)
+
 plt.xlabel("Daily returns %", fontsize = 12)
-plt.title("%s Returns for %s Fiscal Year %s" %(Name, Fiscal_year, Quarter), \
+plt.ylabel("Frequency", fontsize = 12)
+plt.title("%s Returns for %s Fiscal Year(s) %s" %(Name, Fiscal_year, Quarter), \
     fontsize = 12)
+
 plt.tight_layout()
 plt.grid()
+
 if Save == True:
-    plt.savefig("Figures/%s/%s Returns for %s Fiscal Year %s" \
+    plt.savefig("Figures/%s/%s Returns for %s Fiscal Year(s) %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
     print("Histogram saved.\n")
 elif Save == False:
     pass
+
 plt.show()
 
 
@@ -151,26 +166,28 @@ ax.spines["left"].set_position(("data", 0.0))
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
 
-ax.set_title("QQ Plot of %s Returns for %s Fiscal Year %s" \
+ax.set_title("QQ Plot of %s Returns for %s Fiscal Year(s) %s" \
     %(Name, Fiscal_year, Quarter), fontsize = 12)
 ax.set_xlabel("Theoretical Quarterues", loc = "right", fontsize = 12)
 ax.set_ylabel("Actual Quarterues", loc = "top", fontsize = 12)
 
-ax.set_ylim(-0.2, 0.3)
-
-sm.qqplot(Returns, loc = Mean, scale = SD, ax = ax, marker = ".", \
-    markersize = 6, color = "b")
+sm.qqplot(Returns, dist = stats.norm, loc = Mean, scale = SD, \
+    ax = ax, marker = ".", markersize = 6, color = "b")
 sm.qqline(ax, line = "45", label = "y = x", linestyle = "--", color = "r")
 
+ax.set_ylim(-0.1, 0.1)
+ax.set_xlim(-0.1, 0.1)
 plt.tight_layout()
 plt.legend(fontsize = 12, loc = 4)
 plt.grid()
+
 if Save == True:
-    plt.savefig("Figures/%s/QQ Plot of %s Returns for %s Fiscal Year %s" \
+    plt.savefig("Figures/%s/QQ Plot of %s Returns for %s Fiscal Year(s) %s" \
         %(Fiscal_year, Name, Fiscal_year, Quarter))
     print("QQ-plot saved.\n")
 elif Save == False:
     pass
+
 plt.show()
 
 
@@ -245,6 +262,8 @@ def cci(P):
     # Find the correct LIBOR for the calculation. The LIBOR at the start of the
     # data is taken and assumed to be the same over the entire time.
     R = LIBOR[str(Start_date)[:7]]
+    print("Based on 12 month avg. LIBOR in %s the interest rate of savings = %s" \
+        %(str(Start_date)[:7], str('%.2f' %(R * 100)) + " %"))
     
     # Calculate the value of an investment after the time considered.
     F = P * np.exp(R * T)
@@ -253,16 +272,17 @@ def cci(P):
     return F
 
 # Calculate the final price of an investment of £1M over the time considered.
-F = cci(Data[0])
-print("Investing the £%s M from %s to %s would have yielded £%s M\n" \
-    %('%.2f' %Value, Start_date, End_date, '%.2f' %F))
+# F = cci(Value)
+# print("Investing the £%s M from %s to %s would have yielded £%s M\n" \
+    # %('%.2f' %Value, Start_date, End_date, '%.2f' %F))
 
 
-            # ---   PREDICTING FUTURE PRICE   --- #
-print("    # ---   PREDICTING FUTURE PRICE   --- #\n")
+            # ---   PREDICTING FUTURE PRICE PART.1   --- #
+print("    # ---   PREDICTING FUTURE PRICE PART.1   --- #")
+print("This section utalises a normal distribution model for the data\n")
 
-def dS(Volatility, Drift, S, X = 2, dt = 1/4):
-# This function used the volatility, drift, initial price (pence), confidence 
+def dS_norm(Volatility, Drift, S, dt = 1/4, X = 2):
+# This function uses the volatility, drift, initial price (pence), confidence 
 # and a time period (fractions of a year) to estimate the future price of
 # the share. The calculation is based on the assumption that the data follows
 # a normal distribution.
@@ -288,20 +308,68 @@ except ValueError:
 
 # Calculate the drift and volatility of the daily returns based on a normal
 # distribution.
-Volatility = SD / np.sqrt(1 / 252)
-Drift = Mean / (1 / 252) - Volatility**2 / 2
-print("Volatility =", Volatility)
-print("Drift =", Drift, "\n")
+Volatility_n = SD / np.sqrt(1 / 252)
+Drift_n = Mean / (1 / 252) - Volatility_n**2 / 2
+print("Volatility = %s" %('%.2f' %(Volatility_n * 100) + " %"))
+print("Drift = %s\n" %('%.2f' %(Drift_n * 100) + " %"))
 
 # Get latest share price.
 S = Data[-1]
 print("Share price on %s is %s p" %(End_date, '%.2f' %S))
 
 # Call function to get a prediction for the future share price.
-dS_upper, dS_lower = dS(Volatility, Drift, S, dt = dt)
+dS_n_upper, dS_n_lower = dS_norm(Volatility_n, Drift_n, S, dt)
 print("The predicted share price on %s (%s yrs later) with %s confidence is:" \
     %(End_date + timedelta(dt * 365), dt, "95%"))
-print("%s p < S < %s p\n" %('%.2f' %dS_lower,'%.2f' %dS_upper))
+print("%s p < S < %s p\n" %('%.2f' %dS_n_lower,'%.2f' %dS_n_upper))
+
+
+# -----------------------------------------------------------------------------
+            # ---   PART 2   --- #
+# -----------------------------------------------------------------------------
+
+
+            # ---   PREDICTING FUTURE PRICE PART.2   --- #
+# This section does the same as the previous PREDICTING FUTURE PRICE section,
+# however, this one uses a lognormal model for hte data. This will give
+# different results for the Drift and future price range. The same dS() function
+# can be used just with the new drift and 
+print("    # ---   PREDICTING FUTURE PRICE PART.2   --- #")
+print("This section utalises a lognormal model for the data\n")
+
+
+# Create a function to calculate the future price range using a lognorm model.
+def dS_lognorm(Volatility, Drift, S, dt = 1/4, X = 2):
+# This function uses the volatility, drift, initial price (pence), confidence 
+# and a time period (fractions of a year) to estimate the future price of
+# the share. The calculation is based on the assumption that the data follows
+# a lognormal distribution.
+
+    # Calculate the upper and lower changes in price.
+    dS_upper = np.exp(Drift * dt + Volatility * np.sqrt(dt) * X) * S
+    dS_lower = np.exp(Drift * dt - Volatility * np.sqrt(dt) * X) * S
+    
+    # Calculate new price upper and lower limits.
+    New_price_upper = S + dS_upper
+    New_price_lower = S - dS_lower
+    
+    # Return upper and lower limit of possible future prices.
+    return New_price_upper, New_price_lower
+
+
+# Calculate Drift of based on a lognormal distribution molde.
+Volatility_ln = Volatility_n.copy()
+Drift_ln = Drift_n - (Volatility_ln**2 / 2)
+print("Volatility using lognorm model = %s" \
+    %(str('%.2f' %(Volatility_ln * 100)) + " %"))
+print("Drift using lognorm model = %s\n" \
+    %(str('%.2f' %(Drift_ln * 100)) + " %"))
+
+# Call function to get a prediction for the future share price.
+dS_ln_upper, dS_ln_lower = dS_lognorm(Volatility_ln, Drift_ln, S, dt)
+print("The predicted share price on %s (%s yrs later) with %s confidence is:" \
+    %(End_date + timedelta(dt * 365), dt, "95%"))
+print("%s p < S < %s p\n" %('%.2f' %dS_ln_lower,'%.2f' %dS_ln_upper))
 
 
             # ---   EXIT MESSAGE   --- #
