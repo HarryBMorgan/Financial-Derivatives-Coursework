@@ -24,6 +24,9 @@ import statsmodels.api as sm
             # ---   SET VARIABLES   --- #
 print("    # ---   SET VARIABLES   --- #\n")
 
+# Set the length of 1 day in a financial year.
+T = 1 / 252
+
 # This is just so you can experiment without overwriting data you have already
 # generated. Switch to True when you want to save the figures generated.
 Save_in = str(input("Save the figures? (y/n)? [Default = n]"))
@@ -124,7 +127,9 @@ plt.show()
 # Calculate daily returns. Un-comment the rest to calculate weekly/monthly
 # returns. [The returns are the change in price at the end of the day compared
 # to the previous day.]
-Returns = Data.pct_change()#.resample("W").ffill().pct_change()
+Returns = []
+for i in range(len(Data) - 1):
+    Returns.append(Data[i + 1] / Data[i] - 1)
 
 # Calculate the standard deviation and mean of the returns. This is used to
 # calculate the volatility and drift.
@@ -136,7 +141,8 @@ Mean = np.mean(Returns)
 Domain = np.linspace(-0.2, 0.2, len(Returns))
 plt.plot(Domain, stats.norm.pdf(Domain, Mean, SD))
 
-Returns.plot.hist(bins = 60, density = True)
+# Returns.plot.hist(bins = 60, density = True)
+plt.hist(Returns, bins = 60, density = True)
 
 plt.xlabel("Daily returns %", fontsize = 12)
 plt.ylabel("Frequency", fontsize = 12)
@@ -171,7 +177,7 @@ ax.set_title("QQ Plot of %s Returns for %s Fiscal Year(s) %s" \
 ax.set_xlabel("Theoretical Quarterues", loc = "right", fontsize = 12)
 ax.set_ylabel("Actual Quarterues", loc = "top", fontsize = 12)
 
-sm.qqplot(Returns, dist = stats.norm, loc = Mean, scale = SD, \
+sm.qqplot(np.array(Returns), dist = stats.norm, loc = Mean, scale = SD, \
     ax = ax, marker = ".", markersize = 6, color = "b")
 sm.qqline(ax, line = "45", label = "y = x", linestyle = "--", color = "r")
 
@@ -308,10 +314,10 @@ except ValueError:
 
 # Calculate the drift and volatility of the daily returns based on a normal
 # distribution.
-Volatility_n = SD / np.sqrt(1 / 252)
-Drift_n = Mean / (1 / 252) - Volatility_n**2 / 2
-print("Volatility = %s" %('%.2f' %(Volatility_n * 100) + " %"))
-print("Drift = %s\n" %('%.2f' %(Drift_n * 100) + " %"))
+Volatility_n = SD / np.sqrt(T) * 100
+Drift_n = Mean / (T) * 100
+print("Volatility using normal model = %s" %('%.2f' %Volatility_n + " %"))
+print("Drift using normal model = %s\n" %('%.2f' %Drift_n + " %"))
 
 # Get latest share price.
 S = Data[-1]
@@ -358,12 +364,14 @@ def dS_lognorm(Volatility, Drift, S, dt = 1/4, X = 2):
 
 
 # Calculate Drift of based on a lognormal distribution molde.
-Volatility_ln = Volatility_n.copy()
-Drift_ln = Drift_n - (Volatility_ln**2 / 2)
-print("Volatility using lognorm model = %s" \
-    %(str('%.2f' %(Volatility_ln * 100)) + " %"))
-print("Drift using lognorm model = %s\n" \
-    %(str('%.2f' %(Drift_ln * 100)) + " %"))
+Log_returns = []
+for i in range(len(Data) - 1):
+    Log_returns.append(np.log(Data[i + 1] / Data[i]))
+
+Volatility_ln = np.std(Log_returns) / np.sqrt(T) * 100
+Drift_ln = np.mean(Log_returns) / (T) * 100
+print("Volatility using lognorm model = %s" %('%.2f' %Volatility_ln + " %"))
+print("Drift using lognorm model = %s\n" %('%.2f' %Drift_ln) + " %")
 
 # Call function to get a prediction for the future share price.
 dS_ln_upper, dS_ln_lower = dS_lognorm(Volatility_ln, Drift_ln, S, dt)
