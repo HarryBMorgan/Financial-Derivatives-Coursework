@@ -6,7 +6,7 @@
 import pandas_datareader as pdr
 import numpy as np
 import matplotlib.pyplot as plt
-import statistics as stats
+import scipy.stats as stats
 
 # GET DATA
 Data = pdr.get_data_yahoo("RMG.L", start = "2016-04-05", \
@@ -32,8 +32,8 @@ Volatility = np.std(Returns) / np.sqrt(T) * 100
 print("Normal Volatility = %s" %(str('%.2f' %Volatility) + " %"))
 
 # Create drift from normal returns data.
-Mean = np.mean(Returns) / T * 100
-print("Normal Drift = %s\n" %(str('%.2f' %Mean) + " %"))
+Drift = np.mean(Returns) / T * 100
+print("Normal Drift = %s\n" %(str('%.2f' %Drift) + " %"))
 
 
 # Create log returns data. That's the log of the difference in price from one
@@ -48,8 +48,5 @@ Log_volatility = np.std(Log_returns) / np.sqrt(T) * 100
 print("Log Volatility = %s" %(str('%.2f' %Log_volatility) + " %"))
 
 # Calculate drift from mean.
-Log_mean = np.mean(Log_returns) / T * 100
-print("Log Drift = %s\n" %(str('%.2f' %Log_mean) + " %"))
-
-
-# -----------------------------------------------------------------------------
+Log_drift = (np.mean(Log_returns) + (Log_volatility / 100)**2 / 2) * 100
+print("Log Drift = %s\n" %(str('%.2f' %Log_drift) + " %"))
