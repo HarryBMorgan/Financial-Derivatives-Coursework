@@ -26,7 +26,7 @@ import statsmodels.api as sm
 print("    # ---   SET VARIABLES   --- #\n")
 
 # Set the length of 1 day in a financial year.
-T = 1 / 250
+T = 1 / 252
 
 # This is just so you can experiment without overwriting data you have already
 # generated. Switch to True when you want to save the figures generated.
@@ -44,6 +44,11 @@ Start_date, End_date, Quarter, Fiscal_year = stock.set_dates()
 Data = pdr.get_data_yahoo(Code, start = Start_date, end = End_date)["Adj Close"]
 
 
+            # ---   OPEN LOG FILE   --- #
+# Open the file.
+File = open("Log.txt", "w+")
+
+
 # -----------------------------------------------------------------------------
             # ---   PLOTS   --- #
 # -----------------------------------------------------------------------------
@@ -54,7 +59,7 @@ Data.plot()
 
 plt.xlabel("Date", fontsize = 12)
 plt.ylabel("Adj. Close, pence", fontsize = 12)
-plt.title("%s Historical Prices for %s Fiscal Year(s) %s" \
+plt.title("%s Historical Prices for %s %s" \
     %(Name, Fiscal_year, Quarter), fontsize = 12)
 
 plt.xlim(Start_date, End_date)
@@ -63,8 +68,7 @@ plt.grid()
 
 # Check if user wants to save the figures.
 if Save == True:
-    plt.savefig("Figures/%s/%s Historical Prices for %s Fiscal Year(s) %s" \
-        %(Fiscal_year, Name, Fiscal_year, Quarter))
+    plt.savefig("Historical Prices.png")
     print("Historical price plot saved.\n")
 elif Save == False:
     pass
@@ -93,7 +97,7 @@ plt.plot(Bin_centres, stats.norm.pdf(Bin_centres, Mean, SD))
 # Format plot.
 plt.xlabel("Daily returns %", fontsize = 12)
 plt.ylabel("Frequency", fontsize = 12)
-plt.title("%s Returns for %s Fiscal Year(s) %s" %(Name, Fiscal_year, Quarter), \
+plt.title("%s Returns for %s %s" %(Name, Fiscal_year, Quarter), \
     fontsize = 12)
 
 plt.tight_layout()
@@ -101,8 +105,7 @@ plt.grid()
 
 # Check if user wants to save the figures.
 if Save == True:
-    plt.savefig("Figures/%s/%s Returns for %s Fiscal Year(s) %s" \
-        %(Fiscal_year, Name, Fiscal_year, Quarter))
+    plt.savefig("Returns.png")
     print("Histogram saved.\n")
 elif Save == False:
     pass
@@ -114,29 +117,20 @@ plt.show()
 # This Quantile-Quantile plot is to check how well the data fit a normal 
 # distribution.
 ax = plt.gca()
-
-ax.spines["bottom"].set_position(("data", 0.0))
-ax.spines["left"].set_position(("data", 0.0))
-ax.spines["right"].set_visible(False)
-ax.spines["top"].set_visible(False)
-
-ax.set_title("QQ Plot of %s Returns for %s Fiscal Year(s) %s" \
+ax.set_title("QQ Plot of %s Returns for %s %s" \
     %(Name, Fiscal_year, Quarter), fontsize = 12)
 
 sm.qqplot(np.array(Returns), dist = stats.norm, loc = Mean, scale = SD, \
     ax = ax, marker = ".", markersize = 6, color = "b")
 sm.qqline(ax, line = "45", label = "y = x", linestyle = "--", color = "r")
 
-ax.set_ylim(-0.1, 0.1)
-ax.set_xlim(-0.1, 0.1)
 plt.tight_layout()
 plt.legend(fontsize = 12, loc = 4)
 plt.grid()
 
 # Check if user wants to save the figures.
 if Save == True:
-    plt.savefig("Figures/%s/QQ Plot of %s Returns for %s Fiscal Year(s) %s" \
-        %(Fiscal_year, Name, Fiscal_year, Quarter))
+    plt.savefig("QQ-Plot.png")
     print("QQ-plot saved.\n")
 elif Save == False:
     pass
@@ -148,7 +142,8 @@ plt.show()
             # ---   INVESTMENT SCENARIO   --- #
 # -----------------------------------------------------------------------------
 
-print("    # ---   INVESTMENT SCENARIO   --- #\n")
+stock.log(File, "    # ---   INVESTMENT SCENARIO   --- #")
+Run = input("Hit ENTER to run Investment Scenario:\n")
 # Here the code to print information about an initial £1M investment on the
 # Start_date will be considered. Information calculated will include the value
 # of the investment today, the return (%) over the period considered, the
@@ -157,24 +152,26 @@ print("    # ---   INVESTMENT SCENARIO   --- #\n")
 
 # Create initial investment on Start_date.
 Value = 1 #Million british pounds.
-print("Considering a £%s M investment over the time range considered:\n" %Value)
-print("Value of investment on %s = £%s M" %(Start_date, '%.2f' %Value))
+stock.log(File, \
+    "Considering a £%s M investment over the time range specified:\n" %Value)
+stock.log(File, "Value of investment on %s = £%s M" %(Start_date, '%.2f' %Value))
 
 # Calculate change over time range considered.
 Change = Data[-1] / Data[0]
 Value_final = Value * Change
-print("Value of investment on %s = £%s M\n" %(End_date, '%.2f' %Value_final))
+stock.log(File, "Value of investment on %s = £%s M\n" \
+    %(End_date, '%.2f' %Value_final))
 
 # Calculate the max the investment would have been.
 Value_max = Value * (max(Data) / Data[0])
 Date_max = Data[Data == max(Data)].index.tolist()[0]
-print("The maximum value of the investment was £%s M on the %s" \
+stock.log(File, "The maximum value of the investment was £%s M on the %s" \
     %('%.2f' %Value_max, str(Date_max)[:10]))
 
 # Calculate the min the investment would have been.
 Value_min = Value * (min(Data) / Data[0])
 Date_min = Data[Data == min(Data)].index.tolist()[0]
-print("The minimum the value the investment was £%s M on the %s\n" \
+stock.log(File, "The minimum the value the investment was £%s M on the %s\n" \
     %('%.2f' %Value_min, str(Date_min)[:10]))
 
 # Here there will be a calculation of how well a principal of £1M will have
@@ -184,7 +181,7 @@ print("The minimum the value the investment was £%s M on the %s\n" \
 
 # Calculate the final price of an investment of £1M over the time considered.
 F = stock.cc_interest(Value, Start_date, End_date)
-print("Investing the £%s M from %s to %s would have yielded £%s M\n" \
+stock.log(File, "Investing the £%s M from %s to %s would have yielded £%s M\n" \
     %('%.2f' %Value, Start_date, End_date, '%.2f' %F))
 
 
@@ -193,8 +190,9 @@ print("Investing the £%s M from %s to %s would have yielded £%s M\n" \
 # -----------------------------------------------------------------------------
 
             # ---   PREDICTING FUTURE PRICE PART.1   --- #
-print("    # ---   PREDICTING FUTURE PRICE PART.1   --- #")
-print("This section utalises a normal distribution model for the data\n")
+stock.log(File, "    # ---   PREDICTING FUTURE PRICE PART.1   --- #")
+Run = input("Hit ENTER to run Predicting Future Price Part.1:\n")
+stock.log(File, "This section utalises a normal distribution model for the data\n")
 
 # Ask for time frame to calculate for.
 dt = stock.get_dt()
@@ -202,23 +200,30 @@ dt = stock.get_dt()
 # Calculate the drift and volatility of the daily returns based on a normal
 # distribution.
 Norm_vol, Norm_drift = stock.get_vol_drift(Mean, SD)
+stock.log(File, "Volatility using normal model = %s" \
+    %('%.2f' %(Norm_vol * 100) + " %"))
+stock.log(File, "Drift using normal model = %s" \
+    %('%.2f' %(Norm_drift * 100) + " %\n"))
+
 
 # Get latest share price.
 S = Data[-1]
-print("Share price on %s is %s p" %(End_date, '%.2f' %S))
+stock.log(File, "Share price on %s is %s p" %(End_date, '%.2f' %S))
 
 # Call function to get a prediction for the future share price.
 Norm_upper, Norm_lower = stock.ds(Norm_vol, Norm_drift, S, dt)
 
 # Print the results to the user.
-print("The predicted share price on %s (%s yrs later) with %s confidence is:" \
+stock.log(File, \
+    "The predicted share price on %s (%s yrs later) with %s confidence is:" \
     %(End_date + timedelta(dt * 365), dt, "95%"))
-print("%s p < S < %s p\n" %('%.2f' %Norm_lower,'%.2f' %Norm_upper))
+stock.log(File, "%s p < S < %s p\n" %('%.2f' %Norm_lower,'%.2f' %Norm_upper))
 
 
             # ---   PREDICTING FUTURE PRICE PART.2   --- #
-print("    # ---   PREDICTING FUTURE PRICE PART.2   --- #")
-print("This section utalises a lognormal model for the data\n")
+stock.log(File, "    # ---   PREDICTING FUTURE PRICE PART.2   --- #")
+Run = input("Hit ENTER to run Predicting Future Price Part.1:\n")
+stock.log(File, "This section utalises a lognormal model for the data\n")
 
 # This section does the same as the previous PREDICTING FUTURE PRICE section,
 # however, this one uses a lognormal model for the data. This will give
@@ -235,19 +240,28 @@ Log_mean = np.mean(Log_returns)
 Log_sd = np.std(Log_returns)
 
 Log_vol, Log_drift = stock.get_vol_drift(Log_mean, Log_sd, dist_type = "lognorm")
+stock.log(File, "Volatility using lognormal model = %s" \
+    %('%.2f' %(Log_vol * 100)))
+stock.log(File, "Drift using lognormal model = %s" \
+    %('%.2f' %(Log_drift * 100) + " %\n"))
+
 
 # Call function to get a prediction for the future share price.
 Log_upper, Log_lower = stock.ds(Log_vol, Log_drift, S, dt, dist_type = "lognorm")
 
 # Print results to the user.
-print("The predicted share price on %s (%s yrs later) with %s confidence is:" \
+stock.log(File, \
+    "The predicted share price on %s (%s yrs later) with %s confidence is:" \
     %(End_date + timedelta(dt * 365), dt, "95%"))
-print("%s p < S < %s p\n" %('%.2f' %Log_lower,'%.2f' %Log_upper))
+stock.log(File, "%s p < S < %s p\n" %('%.2f' %Log_lower,'%.2f' %Log_upper))
 
 
 # -----------------------------------------------------------------------------
             # ---   EXIT MESSAGE   --- #
 # -----------------------------------------------------------------------------
+
+# Close the file.
+File.close()
 
 # This is so I can run the program by double clicking the file and it doesn't
 # close the terminal as soon as it's finished.

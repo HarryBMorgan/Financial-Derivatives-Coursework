@@ -21,6 +21,7 @@ def get_save():
     if Save_in.lower() == "y":
         print("Saving preference set: Saving plots\n")
         Save = True
+    
     else:
         print("Saving preference set: Not saving plots\n")
         Save = False
@@ -34,6 +35,7 @@ def get_name():
         print("Company set: Royal Mail")
         Name = "Royal Mail" # EDIT THIS #
         Code = "RMG.L" # EDIT THIS #
+    
     elif Name != "":
         print("Company set: %s" %Name)
         Code = str(input("Enter stock code [Default = RMG.L]:")).upper()
@@ -41,6 +43,7 @@ def get_name():
     if Code == "":
         print("Company code set: RMG.L\n")
         Code = "RMG.L" # EDIT THIS #
+    
     elif Code != "":
         print("Company code set: %s\n" %Code)
     
@@ -49,24 +52,28 @@ def get_name():
 # Set date range. This gives financial year covering the range specified.
 def set_dates():
     try:
-        Start_year = int(input("Enter year for data to start [Default = 2016]:"))
+        Start_year = int(input("Enter year of data to cover [Default = 2016]:"))
         print("Start year set: %s" %Start_year)
+    
     except ValueError:
         print("Start year set: 2016")
         Start_year = 2016 # EDIT THIS #
 
     try:
-        End_year = int(input("Enter year for data to end [Default = 2021]:"))
+        End_year = int(input("Enter year for data to end [Default = 2020]:"))
         print("End year set: %s\n" %End_year)
-    except ValueError:
-        print("End year set: 2021\n")
-        End_year = 2021 # EDIT THIS #
-
-    # Produce the string for graphs that is the Financial year in question.
-    Fiscal_year = "%s-%s" %(Start_year, End_year - 2000)
     
+    except ValueError:
+        print("End year set: 2020\n")
+        End_year = 2020 # EDIT THIS #
+
     # Set the quarter of the time period.
     Start_date, End_date, Quarter = __set_quarter__(Start_year, End_year)
+    
+    # Produce the string for graphs that is the Financial year in question.
+    Fiscal_year = "%s.%s.%s - %s.%s.%s" \
+        %(Start_date.day, Start_date.month, Start_date.year, \
+        End_date.day, End_date.month, End_date.year)
     
     return Start_date, End_date, Quarter, Fiscal_year
 
@@ -80,18 +87,21 @@ def __set_quarter__(Start_year, End_year):
     try:
         Quarter = str(input("Enter quarter [Default = Whole Year]:"))
         val = Quarter_dict[Quarter.lower().replace(" ", "")]
+        
         if Quarter == "":
             print("Qurter set: Whole Year\n")
+        
         elif Quarter != "":
             print("Quarter set: %s\n" %Quarter)
+    
     except KeyError:
         val = Quarter_dict[""]
         print("Quarter set: Whole Year\n")
 
     # Set start and end dates for time period. This covers from April to April
     # (fiscal year).
-    End_date = date(End_year, 4, 5) - timedelta(val[0] * 365)
-    Start_date = date(Start_year, 4, 5) + timedelta(val[1] * 356)
+    End_date = date(End_year, 12, 31) - timedelta(val[0] * 365)
+    Start_date = date(Start_year, 1, 1) + timedelta(val[1] * 356)
 
     return Start_date, End_date, Quarter
 
@@ -100,6 +110,7 @@ def get_dt():
     try:
         dt = float(input("Enter fraction of year to predict ahead [Default = 1/4]:"))
         print("Time ahead set at %s yrs\n" %dt)
+    
     except ValueError:
         dt = 1/4
         print("Time period set: %s yrs\n" %dt)
@@ -115,12 +126,7 @@ def get_vol_drift(mu, sigma, T = 1 / 250, dist_type = "norm"):
     elif dist_type == "lognorm":
         Vol = sigma / np.sqrt(T)
         Drift = mu + (Vol**2 / 2)
-        
-    print("Volatility using %s model = %s" \
-        %(dist_type, '%.2f' %(Vol * 100) + " %"))
-    print("Drift using %s model = %s" \
-        %(dist_type, '%.2f' %(Drift * 100) + " %\n"))
-
+    
     return Vol, Drift
 
 # This function uses the volatility, drift, initial price (pence), confidence 
@@ -189,3 +195,11 @@ def cc_interest(P, Start_date, End_date):
     
     # Return value to user.
     return F
+
+# This function writes information to the screen and logs it to the file.
+def log(File, Text):
+    # Print the information to the user.
+    print(Text)
+    
+    # Write information to the File.
+    File.write(Text + "\n")
