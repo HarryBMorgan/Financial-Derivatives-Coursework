@@ -85,14 +85,16 @@ for i in range(len(Data) - 1):
     Returns.append(Data[i + 1] / Data[i] - 1)
 
 # Plot histogram and get number of bins used as a variable.
-_, Bins, _ = plt.hist(Returns, bins = 100, density = True)
+_, Bins, _ = plt.hist(Returns, bins = 100, density = True, \
+    label = "Daily Returns")
 
 # Calculate the standard deviation and mean of the returns.
 Mean, SD = stats.norm.fit(Returns)
 
 # Generate Line Of Best Fit and plot it.
 Bin_centres = Bins[:-1] + np.diff(Bins) / 2
-plt.plot(Bin_centres, stats.norm.pdf(Bin_centres, Mean, SD))
+plt.plot(Bin_centres, stats.norm.pdf(Bin_centres, Mean, SD), \
+    label = "Fitted Distribution")
 
 # Format plot.
 plt.xlabel("Daily returns %", fontsize = 12)
@@ -100,6 +102,7 @@ plt.ylabel("Frequency", fontsize = 12)
 plt.title("%s Returns for %s %s" %(Name, Fiscal_year, Quarter), \
     fontsize = 12)
 
+plt.legend(fontsize = 12)
 plt.tight_layout()
 plt.grid()
 
