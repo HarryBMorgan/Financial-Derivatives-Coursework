@@ -18,7 +18,7 @@ Data = pdr.get_data_yahoo("RMG.L", start = "2016-04-05", \
 # week 7 tutorial video.
 
 # Set time interval as 1 financial day.
-T = 1 / 250
+T = 1 / 252
 
 
 # Create normal returns data.
