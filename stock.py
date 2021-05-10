@@ -25,9 +25,6 @@ import statsmodels.api as sm
             # ---   SET VARIABLES   --- #
 print("    # ---   SET VARIABLES   --- #\n")
 
-# Set the length of 1 day in a financial year.
-T = 1 / 252
-
 # This is just so you can experiment without overwriting data you have already
 # generated. Switch to True when you want to save the figures generated.
 Save = stock.get_save()
@@ -122,6 +119,8 @@ plt.show()
 ax = plt.gca()
 ax.set_title("QQ Plot of %s Returns for %s %s" \
     %(Name, Fiscal_year, Quarter), fontsize = 12)
+plt.xlabel("Theoretical", fontsize = 12)
+plt.ylabel("Sample", fontsize = 12)
 
 sm.qqplot(np.array(Returns), dist = stats.norm, loc = Mean, scale = SD, \
     ax = ax, marker = ".", markersize = 6, color = "b")
@@ -183,7 +182,9 @@ stock.log(File, "The minimum the value the investment was £%s M on the %s\n" \
 # equal to that of the average 12 LIBOR for the time considered.
 
 # Calculate the final price of an investment of £1M over the time considered.
-F = stock.cc_interest(Value, Start_date, End_date)
+F, R = stock.cc_interest(Value, Start_date, End_date, Quarter)
+stock.log(File, "Based on 12 month avg. LIBOR the interest rate of savings = %s" \
+    %(str('%.5f' %(R * 100)) + " %"))
 stock.log(File, "Investing the £%s M from %s to %s would have yielded £%s M\n" \
     %('%.2f' %Value, Start_date, End_date, '%.2f' %F))
 
@@ -197,8 +198,9 @@ stock.log(File, "    # ---   PREDICTING FUTURE PRICE PART.1   --- #")
 Run = input("Hit ENTER to run Predicting Future Price Part.1:\n")
 stock.log(File, "This section utalises a normal distribution model for the data\n")
 
-# Ask for time frame to calculate for.
-dt = stock.get_dt()
+# Set time frame to calculate for.
+dt = 2 / 12
+stock.log(File, "Calculating for %s years in the future\n" %('%.4f' %dt))
 
 # Calculate the drift and volatility of the daily returns based on a normal
 # distribution.
@@ -214,12 +216,13 @@ S = Data[-1]
 stock.log(File, "Share price on %s is %s p" %(End_date, '%.2f' %S))
 
 # Call function to get a prediction for the future share price.
-Norm_upper, Norm_lower = stock.ds(Norm_vol, Norm_drift, S, dt)
+Norm_upper, Norm_lower = stock.ds(Volatility = Norm_vol, Drift = Norm_drift, \
+    S = S, dt = dt)
 
 # Print the results to the user.
 stock.log(File, \
     "The predicted share price on %s (%s yrs later) with %s confidence is:" \
-    %(End_date + timedelta(dt * 365), dt, "95%"))
+    %(End_date + timedelta(days = dt * 365), ('%.2f' %dt), "95%"))
 stock.log(File, "%s p < S < %s p\n" %('%.2f' %Norm_lower,'%.2f' %Norm_upper))
 
 
@@ -250,12 +253,13 @@ stock.log(File, "Drift using lognormal model = %s" \
 
 
 # Call function to get a prediction for the future share price.
-Log_upper, Log_lower = stock.ds(Log_vol, Log_drift, S, dt, dist_type = "lognorm")
+Log_upper, Log_lower = stock.ds(Volatility = Log_vol, Drift = Log_drift, \
+    S = S, dt = dt, dist_type = "lognorm")
 
 # Print results to the user.
 stock.log(File, \
     "The predicted share price on %s (%s yrs later) with %s confidence is:" \
-    %(End_date + timedelta(dt * 365), dt, "95%"))
+    %(End_date + timedelta(dt * 365), ('%.2f' %dt), "95%"))
 stock.log(File, "%s p < S < %s p\n" %('%.2f' %Log_lower,'%.2f' %Log_upper))
 
 

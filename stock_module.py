@@ -100,25 +100,13 @@ def __set_quarter__(Start_year, End_year):
 
     # Set start and end dates for time period. This covers from April to April
     # (fiscal year).
-    End_date = date(End_year, 12, 31) - timedelta(val[0] * 365)
-    Start_date = date(Start_year, 1, 1) + timedelta(val[1] * 356)
+    End_date = date(End_year, 12, 31) - timedelta(days = val[0] * 365)
+    Start_date = date(Start_year, 1, 1) + timedelta(days = val[1] * 356)
 
     return Start_date, End_date, Quarter
 
-# Ask for time frame to calculate for.
-def get_dt():
-    try:
-        dt = float(input("Enter fraction of year to predict ahead [Default = 1/4]:"))
-        print("Time ahead set at %s yrs\n" %dt)
-    
-    except ValueError:
-        dt = 1/4
-        print("Time period set: %s yrs\n" %dt)
-
-    return dt
-
 # Calculates the volatility depending on the type of model, norm or lognorm.
-def get_vol_drift(mu, sigma, T = 1 / 250, dist_type = "norm"):
+def get_vol_drift(mu, sigma, T = 1 / 252, dist_type = "norm"):
     if dist_type == "norm":
         Vol = sigma / np.sqrt(T)
         Drift = mu / T
@@ -133,20 +121,25 @@ def get_vol_drift(mu, sigma, T = 1 / 250, dist_type = "norm"):
 # and a time period (fractions of a year) to estimate the future price of
 # the share. The calculation is based on the assumption that the data follows
 # a normal distribution.
-def ds(Volatility, Drift, S, dt = 1/4, X = 2, dist_type = "norm"):
+def ds(Volatility, Drift, S, dt = 1/6, X = 2, dist_type = "norm"):
     if dist_type == "norm":
         # Calculate the upper and lower changes in price.
-        dS_upper = Drift * S * dt + Volatility * S * np.sqrt(dt) * X
-        dS_lower = Drift * S * dt - Volatility * S * np.sqrt(dt) * X
+        a = Drift * dt * S
+        b = Volatility * np.sqrt(dt) * X * S
+        New_price_upper = S + a + b
+        New_price_lower = S + a - b
         
     elif dist_type == "lognorm":
         # Calculate the upper and lower changes in price.
-        dS_upper = np.exp(Drift * dt + Volatility * np.sqrt(dt) * X) * S
-        dS_lower = np.exp(Drift * dt - Volatility * np.sqrt(dt) * X) * S
+        a = (Drift - (Volatility**2 / 2)) * dt
+        b = Volatility * np.sqrt(dt) * X
+        dS_upper = np.log(S) + a + b
+        dS_lower = np.log(S) + a - b
+        New_price_upper = np.exp(dS_upper)
+        New_price_lower = np.exp(dS_lower)
     
     # Calculate new price upper and lower limits.
-    New_price_upper = S + dS_upper
-    New_price_lower = S - dS_lower
+
 
     # Return upper and lower limit of possible future prices.
     return New_price_upper, New_price_lower
@@ -155,46 +148,28 @@ def ds(Volatility, Drift, S, dt = 1/4, X = 2, dist_type = "norm"):
 # It will be called # upon based on the start date of the imagined investment
 # above. This data is obtained from the following website.
 # https://www.macrotrends.net/1433/historical-libor-rates-chart
-LIBOR = {"2016-01": 0.0114, "2016-02": 0.0118, "2016-03": 0.0121, \
-    "2016-04": 0.0123, "2016-05": 0.0134, "2016-06": 0.0123, "2016-07": 0.0143, \
-    "2016-08": 0.0156, "2016-09": 0.0155, "2016-10": 0.0158, "2016-11": 0.0164, \
-    "2016-12": 0.0169, \
-    
-    "2017-01": 0.0171, "2017-02": 0.0176, "2017-03": 0.0180, "2017-04": 0.0177, \
-    "2017-05": 0.0172, "2017-06": 0.0174, "2017-07": 0.0173, "2017-08": 0.0171, \
-    "2017-09": 0.0178, "2017-10": 0.0185, "2017-11": 0.0195, "2017-12": 0.0211, \
-    
-    "2018-01": 0.0227, "2018-02": 0.0250, "2018-03": 0.0266, "2018-04": 0.0277, \
-    "2018-05": 0.0272, "2018-06": 0.0276, "2018-07": 0.0283, "2018-08": 0.0284, \
-    "2018-09": 0.0292, "2018-10": 0.0308, "2018-11": 0.0312, "2018-12": 0.0301, \
-    
-    "2019-01": 0.0298, "2019-02": 0.0287, "2019-03": 0.0271, "2019-04": 0.0272, \
-    "2019-05": 0.0251, "2019-06": 0.0218, "2019-07": 0.0219, "2019-08": 0.0197, \
-    "2019-09": 0.0203, "2019-10": 0.0196, "2019-11": 0.0195, "2019-12": 0.0200, \
-    
-    "2020-01": 0.0181, "2020-02": 0.0138, "2020-03": 0.0100, "2020-04": 0.0087, \
-    "2020-05": 0.0067, "2020-06": 0.0055, "2020-07": 0.0045, "2020-08": 0.0045, \
-    "2020-09": 0.0043}
+LIBOR = {"2016-2020": 0.0081146, "2016-2016": 0.0089053, "2017-2017": 0.0070344, \
+        "2018-2018": 0.0099647, "2019-2019": 0.0100077, "2020-2020": 0.0046735, \
+        "2020-2020first quarter": 0.0081448, "2020-2020second quarter": 0.0066524, \
+        "2020-2020third quarter": 0.0026382, "2020-2020fourth quarter": 0.0012389}
 
 # This function calculates the compound interest on a principal after the time
 # considered of the whole data set. The inputs are the principle investment
 # and R, the rate, taken from the LIBOR dict.
-def cc_interest(P, Start_date, End_date):
+def cc_interest(P, Start_date, End_date, Quarter):
 
     # Calculate the time in years of the data set considered.
     T = (End_date - Start_date).days / 365
     
     # Find the correct LIBOR for the calculation. The LIBOR at the start of the
     # data is taken and assumed to be the same over the entire time.
-    R = LIBOR[str(Start_date)[:7]]
-    print("Based on 12 month avg. LIBOR in %s the interest rate of savings = %s" \
-        %(str(Start_date)[:7], str('%.2f' %(R * 100)) + " %"))
+    R = LIBOR[str(Start_date.year) + "-" + str(End_date.year) + Quarter]
     
     # Calculate the value of an investment after the time considered.
     F = P * np.exp(R * T)
     
     # Return value to user.
-    return F
+    return F, R
 
 # This function writes information to the screen and logs it to the file.
 def log(File, Text):
