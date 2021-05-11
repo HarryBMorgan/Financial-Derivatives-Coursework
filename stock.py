@@ -262,6 +262,106 @@ stock.log(File, \
     %(End_date + timedelta(dt * 365), ('%.2f' %dt), "95%"))
 stock.log(File, "%s p < S < %s p\n" %('%.2f' %Log_lower,'%.2f' %Log_upper))
 
+# -----------------------------------------------------------------------------
+            # ---   FINANCE   --- #
+# -----------------------------------------------------------------------------
+# This is the bit I wrote seperate for calculating values in a binomial tree.
+# The values used are using a user selected option price and LIBOR for 2 months
+# after final data. Volatility is based on lognormal 2016-2020.
+# from numpy import exp, sqrt
+# data = {"2020 (Q4) Call": [0.3771, 0.0010095, 354.585], \
+    # "2020 (Q4) PUT": [0.3771, 0.0010095, 303.39]}
+
+# for key, val in data.items():
+    
+    # log(key + "\n")
+    
+    # set values.
+    # dt = 1 / 12
+    # sigma = val[0]
+    # log(File, "volatility = %s" %sigma)
+    # r = val[1]
+    # log(File, "rate = %s\n" %r)
+    
+    # calculate u and d.
+    # u = round(exp(sigma * sqrt(dt)), 4)
+    # log(File, "u = %s" %u)
+    # d = round(exp(-sigma * sqrt(dt)), 4)
+    # log(File, "d = %s" %d)
+    
+    # calculate p.
+    # p = round((exp(r * dt) - d) / (u - d), 4)
+    # log(File, "p = %s" %p)
+    # log(File, "1 - p = %s\n" %(1 - p))
+    
+    # SA = round(337.70, 2)
+    # log(File, "SA = %s" %SA)
+    
+    # log(File, "After 1 month:")
+    # SB = round(SA * u, 2)
+    # log(File, "SB = %s" %('%.2f' %SB))
+    # SC = round(SA * d, 2)
+    # log(File, "SC = %s" %('%.2f' %SC))
+    
+    # log(File, "After 2 months:")
+    # SD = round(SA * u * u, 2)
+    # log(File, "SD = %s" %('%.2f' %SD))
+    # SE = round(SA * d * u, 2)
+    # log(File, "SE = %s" %('%.2f' %SE))
+    # SF = round(SA * d * d, 2)
+    # log(File, "SF = %s\n" %('%.2f' %SF))
+    
+    # strike = val[2]
+    # log(File, "strike = " + str(strike) + "\n")
+    
+    # if strike > SA:
+    # Call.
+        # otion price D.
+        # O = [SD - strike, 0]
+        # OD = round(max(O), 2)
+        # log(File, "option price D = %s" %OD)
+        
+        # otion price E.
+        # O = [SE - strike, 0]
+        # OE = round(max(O), 2)
+        # log(File, "option price E = %s" %OE)
+        
+        # otion price F.
+        # O = [SF - strike, 0]
+        # OF = round(max(O), 2)
+        # log(File, "option price F = %s\n" %OF)
+    
+    # elif strike < SA:
+    # Put.
+        # otion price D.
+        # O = [- SD + strike, 0]
+        # OD = round(max(O), 2)
+        # log(File, "option price D = %s" %OD)
+        
+        # otion price E.
+        # O = [- SE + strike, 0]
+        # OE = round(max(O), 2)
+        # log(File, "option price E = %s" %OE)
+        
+        # otion price F.
+        # O = [- SF + strike, 0]
+        # OF = round(max(O), 2)
+        # log(File, "option price F = %s\n" %OF)
+    
+    # option price B.
+    # OB = round(exp(-sigma * dt) * (p * OD + (1 - p) * OE), 2)
+    # log(File, "option price B = %s" %OB)
+    
+    # option price C.
+    # OC = round(exp(-sigma * dt) * (p * OE + (1 - p) * OF), 2)
+    # log(File, "option price C = %s\n" %OC)
+    
+    # option at A.
+    # OA = round(exp(-sigma * dt) * (p * OB + (1 - p) * OC), 2)
+    # log(File, "option price A = %s\n" %OA)
+    
+    # Next = input("Hit ENTER to run again:")
+
 
 # -----------------------------------------------------------------------------
             # ---   EXIT MESSAGE   --- #
